@@ -1,0 +1,41 @@
+
+name: Java maven build & publish
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build_job:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: maven
+    - name: Build with Maven
+      run: mvn -B package --file pom.xml
+    
+  publish_job:
+   runs-on: ubuntu-latest
+   needs: build_job
+   steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-java@v4
+      with:
+         java-version: '17'
+         distribution: 'temurin'
+    - run: mvn --batch-mode --update-snapshots verify
+    - run: mkdir staging && cp targets/*.jar staging
+    - uses: actions/upload-artifact@v4
+      with:
+        name: package
+        path: staging
+  
